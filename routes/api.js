@@ -54,15 +54,15 @@ module.exports = function (app) {
     };
 
     if (stockQuery.length === 1) {
-      const stockData = await fetchStockData(stockQuery[0].toUpperCase());
+  const stockData = await fetchStockData(stockQuery[0].toUpperCase());
 
-      if (!stockData) {
-        return res.status(400).json({ error: 'Invalid stock symbol' });
-      }
+  if (!stockData) {
+    return res.status(400).json({ error: 'Invalid stock symbol' });
+  }
 
-      // Correct: wrap single stock response inside stockData
-      return res.json({ stockData });
-    }
+  // Wrap the response in an object with key stockData, as tests expect
+  return res.json({ stockData });
+}
 
     if (stockQuery.length === 2) {
       const [stock1, stock2] = await Promise.all([
