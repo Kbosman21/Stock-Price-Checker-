@@ -6,10 +6,19 @@ const stockLikes = {};
 
 module.exports = function (app) {
   app.route('/api/stock-prices').get(async function (req, res) {
-    const stockQuery = req.query.stock;
+    let stockQuery = req.query.stock;
     const like = req.query.like === 'true';
-    const ip = crypto.createHash('sha256').update(req.ip).digest('hex'); // Anonymize IP
 
+    // Use forwarded IP if available, else fallback to req.ip
+    const ipRaw = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+    const ip = crypto.createHash('sha256').update(ipRaw).digest('hex'); // Anonymize IP
+
+    // Normalize stockQuery to array if single string
+    if (typeof stockQuery === 'string') {
+      stockQuery = [stockQuery];
+    }
+
+    // Helper: fetch stock info and track likes
     const fetchStockData = async (ticker) => {
       try {
         const response = await fetch(`https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/${ticker}/quote`);
@@ -44,17 +53,18 @@ module.exports = function (app) {
       }
     };
 
-    if (typeof stockQuery === 'string') {
-      const stockData = await fetchStockData(stockQuery.toUpperCase());
+    if (stockQuery.length === 1) {
+      const stockData = await fetchStockData(stockQuery[0].toUpperCase());
 
       if (!stockData) {
         return res.status(400).json({ error: 'Invalid stock symbol' });
       }
 
-      return res.json({ stockData });
+      // IMPORTANT: Return the object directly, NOT inside a "stockData" key
+      return res.json(stockData);
     }
 
-    if (Array.isArray(stockQuery)) {
+    if (stockQuery.length === 2) {
       const [stock1, stock2] = await Promise.all([
         fetchStockData(stockQuery[0].toUpperCase()),
         fetchStockData(stockQuery[1].toUpperCase())
@@ -86,3 +96,4 @@ module.exports = function (app) {
     return res.status(400).json({ error: 'Invalid stock query' });
   });
 };
+
