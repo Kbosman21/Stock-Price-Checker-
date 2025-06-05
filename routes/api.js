@@ -60,8 +60,8 @@ module.exports = function (app) {
         return res.status(400).json({ error: 'Invalid stock symbol' });
       }
 
-      // IMPORTANT: Return the object directly, NOT inside a "stockData" key
-      return res.json(stockData);
+      // Correct: wrap single stock response inside stockData
+      return res.json({ stockData });
     }
 
     if (stockQuery.length === 2) {
@@ -96,4 +96,3 @@ module.exports = function (app) {
     return res.status(400).json({ error: 'Invalid stock query' });
   });
 };
-
