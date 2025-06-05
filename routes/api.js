@@ -9,8 +9,8 @@ module.exports = function (app) {
     let stockQuery = req.query.stock;
     const like = req.query.like === 'true';
 
-    // Use forwarded IP if available, else fallback to req.ip
-    const ipRaw = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+    // Use forwarded IP if available, else fallback to req.connection.remoteAddress or req.ip
+    const ipRaw = req.headers['x-forwarded-for']?.split(',')[0] || req.connection?.remoteAddress || req.ip;
     const ip = crypto.createHash('sha256').update(ipRaw).digest('hex'); // Anonymize IP
 
     // Normalize stockQuery to array if single string
@@ -54,15 +54,14 @@ module.exports = function (app) {
     };
 
     if (stockQuery.length === 1) {
-  const stockData = await fetchStockData(stockQuery[0].toUpperCase());
+      const stockData = await fetchStockData(stockQuery[0].toUpperCase());
 
-  if (!stockData) {
-    return res.status(400).json({ error: 'Invalid stock symbol' });
-  }
+      if (!stockData) {
+        return res.status(400).json({ error: 'Invalid stock symbol' });
+      }
 
-  // Wrap the response in an object with key stockData, as tests expect
-  return res.json({ stockData });
-}
+      return res.json({ stockData });
+    }
 
     if (stockQuery.length === 2) {
       const [stock1, stock2] = await Promise.all([
